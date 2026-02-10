@@ -1,0 +1,1324 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Système de Randomisation Stratifiée - Multi-utilisateurs</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        .header {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        
+        .header h1 {
+            color: #667eea;
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+        
+        .header p {
+            color: #666;
+            font-size: 1.1em;
+        }
+        
+        .study-name {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px 30px;
+            border-radius: 10px;
+            font-size: 1.3em;
+            font-weight: bold;
+            margin-top: 15px;
+        }
+        
+        .status-badge {
+            display: inline-block;
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-size: 0.9em;
+            margin-top: 10px;
+        }
+        
+        .status-locked {
+            background: #28a745;
+            color: white;
+        }
+        
+        .status-unlocked {
+            background: #ffc107;
+            color: #333;
+        }
+        
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 20px;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        
+        .panel {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+        
+        .panel h2 {
+            color: #333;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 3px solid #667eea;
+        }
+        
+        .btn {
+            width: 100%;
+            padding: 20px;
+            font-size: 1.3em;
+            font-weight: bold;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+        
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        
+        .btn-primary:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+        }
+        
+        .btn-success {
+            background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+            color: white;
+        }
+        
+        .btn-success:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(56, 239, 125, 0.4);
+        }
+        
+        .btn-danger {
+            background: linear-gradient(135deg, #eb3349 0%, #f45c43 100%);
+            color: white;
+        }
+        
+        .btn-danger:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(235, 51, 73, 0.4);
+        }
+        
+        .btn-warning {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: white;
+        }
+        
+        .btn-warning:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(245, 87, 108, 0.4);
+        }
+        
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+            font-size: 1em;
+            padding: 12px;
+        }
+        
+        .btn-secondary:hover:not(:disabled) {
+            background: #5a6268;
+        }
+        
+        .result-box {
+            background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+            padding: 30px;
+            border-radius: 10px;
+            color: white;
+            margin: 20px 0;
+            animation: slideIn 0.5s;
+        }
+        
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .result-box h3 {
+            margin-bottom: 15px;
+            font-size: 1.5em;
+        }
+        
+        .result-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 0;
+            border-bottom: 1px solid rgba(255,255,255,0.3);
+        }
+        
+        .result-item:last-child {
+            border-bottom: none;
+        }
+        
+        .result-value {
+            font-weight: bold;
+            font-size: 1.2em;
+        }
+        
+        .group-assigned {
+            font-size: 2em !important;
+            text-align: center;
+            margin: 15px 0;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+            padding: 20px;
+            background: rgba(255,255,255,0.2);
+            border-radius: 10px;
+        }
+        
+        .input-group {
+            margin-bottom: 20px;
+        }
+        
+        .input-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #333;
+            font-weight: bold;
+        }
+        
+        .input-group input, .input-group textarea, .input-group select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 1em;
+            font-family: inherit;
+        }
+        
+        .input-group input:focus, .input-group textarea:focus, .input-group select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        
+        .input-group textarea {
+            min-height: 200px;
+            resize: vertical;
+            font-family: monospace;
+        }
+        
+        .input-group input[readonly] {
+            background-color: #f0f0f0;
+            cursor: not-allowed;
+        }
+        
+        .history-table {
+            width: 100%;
+            margin-top: 20px;
+            border-collapse: collapse;
+            overflow: hidden;
+            border-radius: 10px;
+        }
+        
+        .history-table th {
+            background: #667eea;
+            color: white;
+            padding: 15px;
+            text-align: left;
+            font-size: 0.9em;
+        }
+        
+        .history-table td {
+            padding: 12px 15px;
+            border-bottom: 1px solid #ddd;
+            font-size: 0.9em;
+        }
+        
+        .history-table tr:last-child td {
+            border-bottom: none;
+        }
+        
+        .history-table tr:nth-child(even) {
+            background: #f8f9fa;
+        }
+        
+        .history-table tr:hover {
+            background: #e9ecef;
+        }
+        
+        .alert {
+            padding: 15px;
+            border-radius: 8px;
+            margin: 15px 0;
+        }
+        
+        .alert-warning {
+            background: #fff3cd;
+            border: 1px solid #ffc107;
+            color: #856404;
+        }
+        
+        .alert-info {
+            background: #d1ecf1;
+            border: 1px solid #17a2b8;
+            color: #0c5460;
+        }
+        
+        .alert-success {
+            background: #d4edda;
+            border: 1px solid #28a745;
+            color: #155724;
+        }
+        
+        .alert-danger {
+            background: #f8d7da;
+            border: 1px solid #dc3545;
+            color: #721c24;
+        }
+        
+        .login-box {
+            max-width: 400px;
+            margin: 100px auto;
+            background: white;
+            padding: 40px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+        
+        .login-box h2 {
+            text-align: center;
+            color: #667eea;
+            margin-bottom: 30px;
+        }
+        
+        .hidden {
+            display: none;
+        }
+        
+        .group-list {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 15px 0;
+        }
+        
+        .group-list h4 {
+            color: #667eea;
+            margin-bottom: 10px;
+        }
+        
+        .group-list ul {
+            list-style: none;
+        }
+        
+        .group-list li {
+            padding: 8px;
+            margin: 5px 0;
+            background: white;
+            border-radius: 5px;
+            border-left: 4px solid #667eea;
+        }
+        
+        .history-section {
+            margin-top: 30px;
+            padding-top: 30px;
+            border-top: 2px solid #e0e0e0;
+        }
+        
+        .sync-status {
+            background: #17a2b8;
+            color: white;
+            padding: 10px 15px;
+            border-radius: 8px;
+            margin: 15px 0;
+            text-align: center;
+            font-size: 0.9em;
+        }
+        
+        .sync-status.syncing {
+            background: #ffc107;
+            color: #333;
+        }
+        
+        .sync-status.error {
+            background: #dc3545;
+        }
+        
+        .two-columns {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+        
+        @media (max-width: 768px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+            
+            .two-columns {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        .form-section {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+        }
+        
+        .form-section h3 {
+            color: #667eea;
+            margin-bottom: 15px;
+        }
+        
+        .strate-config-box {
+            background: white;
+            border: 2px solid #764ba2;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+        
+        .strate-config-box h4 {
+            color: #764ba2;
+            margin-bottom: 15px;
+            font-size: 1.2em;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎲 Système de Randomisation Stratifiée</h1>
+            <p>Randomisation sécurisée multi-utilisateurs avec stratification</p>
+            <div class="study-name" id="studyNameDisplay">
+                <span id="studyNameText">Aucune étude configurée</span>
+            </div>
+            <div id="lockStatusBadge" class="hidden">
+                <span class="status-badge status-unlocked" id="statusBadge">
+                    🔓 Configuration ouverte
+                </span>
+            </div>
+            <div id="syncStatus" class="sync-status hidden">
+                ⏳ Synchronisation en cours...
+            </div>
+        </div>
+        
+        <!-- Mode Utilisateur - Login -->
+        <div id="userLoginMode">
+            <div class="login-box">
+                <h2>🔐 Accès Randomisation</h2>
+                <div class="input-group">
+                    <label>Mot de passe utilisateur:</label>
+                    <input type="password" id="userPassword" placeholder="Entrez le mot de passe">
+                </div>
+                <button class="btn btn-primary" onclick="checkUserPassword()">
+                    🔓 Accéder
+                </button>
+                <button class="btn btn-secondary" onclick="showAdminLogin()">
+                    ⚙️ Accès Administrateur
+                </button>
+            </div>
+        </div>
+        
+        <!-- Mode Utilisateur - Randomisation -->
+        <div id="userMode" class="hidden">
+            <div class="main-content">
+                <div class="panel">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                        <h2>📋 Randomisation Patient</h2>
+                        <button class="btn btn-secondary" style="width: auto;" onclick="logoutUser()">
+                            🔒 Déconnexion
+                        </button>
+                    </div>
+                    
+                    <div class="form-section">
+                        <h3>📝 Informations Patient</h3>
+                        
+                        <div class="input-group">
+                            <label>Initiales du patient: *</label>
+                            <input type="text" id="patientInitials" placeholder="Ex: AB" maxlength="10" style="text-transform: uppercase;">
+                        </div>
+                        
+                        <div class="input-group">
+                            <label>Nom de l'investigateur: *</label>
+                            <input type="text" id="investigatorName" placeholder="Ex: Dr. Martin">
+                        </div>
+                        
+                        <div class="input-group" id="strateGroup">
+                            <label>Strate: *</label>
+                            <select id="strateSelect">
+                                <option value="">-- Sélectionnez une strate --</option>
+                            </select>
+                        </div>
+                        
+                        <div class="input-group">
+                            <label>Date de randomisation:</label>
+                            <input type="date" id="randomizationDate" readonly>
+                        </div>
+                    </div>
+                    
+                    <button class="btn btn-primary" onclick="randomizePatient()">
+                        🎲 RANDOMISER CE PATIENT
+                    </button>
+                    
+                    <div id="resultBox" class="hidden">
+                        <div class="result-box">
+                            <h3>✅ Résultat de la Randomisation</h3>
+                            <div class="result-item">
+                                <span>Numéro Patient:</span>
+                                <span class="result-value" id="patientId"></span>
+                            </div>
+                            <div class="result-item">
+                                <span>Initiales:</span>
+                                <span class="result-value" id="resultInitials"></span>
+                            </div>
+                            <div class="result-item">
+                                <span>Investigateur:</span>
+                                <span class="result-value" id="resultInvestigator"></span>
+                            </div>
+                            <div class="result-item">
+                                <span>Strate:</span>
+                                <span class="result-value" id="resultStrate"></span>
+                            </div>
+                            <div class="group-assigned" id="groupAssigned"></div>
+                            <div class="result-item">
+                                <span>Date et Heure:</span>
+                                <span class="result-value" id="dateTime"></span>
+                            </div>
+                            <button class="btn btn-success" onclick="exportCurrentToExcel()">
+                                📥 Exporter vers Excel
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="alert alert-info">
+                        <strong>ℹ️ Instructions:</strong><br>
+                        Remplissez tous les champs obligatoires (*) puis cliquez sur le bouton pour randomiser le patient.
+                        Le système attribuera automatiquement le prochain groupe de la liste de randomisation de la strate sélectionnée.
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Login Administrateur -->
+        <div id="adminLogin" class="hidden">
+            <div class="login-box">
+                <h2>🔐 Accès Administrateur</h2>
+                <div class="input-group">
+                    <label>Mot de passe:</label>
+                    <input type="password" id="adminPassword" placeholder="Entrez le mot de passe administrateur">
+                </div>
+                <button class="btn btn-primary" onclick="checkAdminPassword()">
+                    🔓 Connexion
+                </button>
+                <button class="btn btn-secondary" onclick="backToUserLogin()">
+                    ← Retour
+                </button>
+            </div>
+        </div>
+        
+        <!-- Mode Administrateur -->
+        <div id="adminMode" class="hidden">
+            <div class="panel">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                    <h2>⚙️ Configuration Administrateur</h2>
+                    <button class="btn btn-secondary" style="width: auto;" onclick="logoutAdmin()">
+                        🔒 Déconnexion
+                    </button>
+                </div>
+                
+                <div id="configSection">
+                    <h3 style="color: #667eea; margin-bottom: 20px;">📊 Configuration de l'Étude</h3>
+                    
+                    <div class="input-group">
+                        <label>📌 Nom de l'étude: *</label>
+                        <input type="text" id="studyName" placeholder="Ex: Étude HELP-VDL 2025">
+                    </div>
+                    
+                    <div class="input-group">
+                        <label>🔑 Mot de passe utilisateur: *</label>
+                        <input type="text" id="userPasswordConfig" placeholder="Mot de passe pour les utilisateurs qui randomisent">
+                        <small style="color: #666; display: block; margin-top: 5px;">
+                            Ce mot de passe sera requis pour accéder à l'interface de randomisation
+                        </small>
+                    </div>
+                    
+                    <div class="input-group">
+                        <label>📊 Strates (une par ligne): *</label>
+                        <textarea id="stratesList" placeholder="Exemple:&#10;Strate A - Âge < 65 ans&#10;Strate B - Âge ≥ 65 ans"></textarea>
+                        <small style="color: #666; display: block; margin-top: 5px;">
+                            Entrez les strates une par ligne. Minimum 1 strate requise.
+                        </small>
+                    </div>
+                    
+                    <button class="btn btn-success" onclick="createStratesConfig()">
+                        📊 Créer les strates et configurer les listes
+                    </button>
+                    
+                    <div id="stratesConfigSection" class="hidden">
+                        <h4 style="color: #667eea; margin: 20px 0;">📝 Configuration des listes par strate</h4>
+                        <div id="stratesListsContainer"></div>
+                        
+                        <button class="btn btn-success" onclick="saveConfiguration()">
+                            💾 Sauvegarder la Configuration Complète
+                        </button>
+                    </div>
+                    
+                    <div id="currentGroups" class="hidden">
+                        <div class="group-list">
+                            <h4>📋 Configuration actuelle:</h4>
+                            <ul id="configDisplay"></ul>
+                        </div>
+                    </div>
+                    
+                    <div class="alert alert-warning" id="lockWarning" class="hidden">
+                        <strong>⚠️ Attention:</strong><br>
+                        Une fois la configuration verrouillée, vous ne pourrez plus modifier les listes de randomisation ni les strates.
+                        Assurez-vous que tout est correct avant de verrouiller.
+                    </div>
+                    
+                    <button class="btn btn-warning" onclick="lockConfiguration()" id="lockButton" class="hidden">
+                        🔒 VERROUILLER LA CONFIGURATION
+                    </button>
+                </div>
+                
+                <hr style="margin: 30px 0; border: none; border-top: 2px solid #e0e0e0;">
+                
+                <div class="history-section">
+                    <h3 style="color: #667eea; margin-bottom: 15px;">📊 Historique des Randomisations</h3>
+                    
+                    <div class="alert alert-info">
+                        <strong>ℹ️ Synchronisation:</strong><br>
+                        Cet historique est partagé entre tous les utilisateurs. Actualisez régulièrement pour voir les dernières randomisations.
+                    </div>
+                    
+                    <button class="btn btn-secondary" onclick="refreshHistory()">
+                        🔄 Actualiser l'historique
+                    </button>
+                    
+                    <div style="overflow-x: auto;">
+                        <table class="history-table">
+                            <thead>
+                                <tr>
+                                    <th>N° Patient</th>
+                                    <th>Initiales</th>
+                                    <th>Investigateur</th>
+                                    <th>Strate</th>
+                                    <th>Groupe</th>
+                                    <th>Date/Heure</th>
+                                </tr>
+                            </thead>
+                            <tbody id="historyTable">
+                                <tr>
+                                    <td colspan="6" style="text-align: center; color: #999;">Aucune randomisation effectuée</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    <button class="btn btn-success" onclick="exportAllToExcel()" style="margin-top: 15px;">
+                        📥 Exporter tout l'historique vers Excel
+                    </button>
+                </div>
+                
+                <hr style="margin: 30px 0; border: none; border-top: 2px solid #e0e0e0;">
+                
+                <h3 style="color: #dc3545; margin-bottom: 15px;">⚠️ Zone Dangereuse</h3>
+                
+                <div class="alert alert-danger">
+                    <strong>🚨 ATTENTION:</strong><br>
+                    Les actions ci-dessous sont irréversibles et affectent tous les utilisateurs du système.
+                </div>
+                
+                <button class="btn btn-danger" onclick="clearHistory()">
+                    🗑️ Effacer uniquement l'historique
+                </button>
+                
+                <button class="btn btn-danger" onclick="unlockConfiguration()" id="unlockButton" class="hidden">
+                    🔓 Déverrouiller la configuration
+                </button>
+                
+                <button class="btn btn-danger" onclick="clearAll()">
+                    ⚠️ TOUT EFFACER (Nouvelle étude)
+                </button>
+            </div>
+        </div>
+    </div>
+
+<script>
+// Configuration
+const ADMIN_PASSWORD = 'Admin2024!';
+const STORAGE_KEY = 'randomization_study_stratified_v3';
+const SYNC_INTERVAL = 5000;
+
+// Variables globales
+let studyConfig = {
+    studyName: '',
+    userPassword: '',
+    strates: [],
+    randomizationByStrate: {},
+    strateCounters: {},
+    isLocked: false,
+    randomizationHistory: []
+};
+
+let syncInterval = null;
+let isUserLoggedIn = false;
+let isAdminLoggedIn = false;
+
+// Gestion du stockage
+function loadData() {
+    const savedData = localStorage.getItem(STORAGE_KEY);
+    if (savedData) {
+        try {
+            studyConfig = JSON.parse(savedData);
+            updateAllDisplays();
+        } catch (e) {
+            console.error('Erreur:', e);
+        }
+    }
+}
+
+function saveData() {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(studyConfig));
+    showSyncStatus('✅ Données sauvegardées');
+}
+
+function showSyncStatus(message, isError = false) {
+    const statusEl = document.getElementById('syncStatus');
+    statusEl.textContent = message;
+    statusEl.classList.remove('hidden', 'syncing', 'error');
+    if (isError) statusEl.classList.add('error');
+    setTimeout(() => statusEl.classList.add('hidden'), 3000);
+}
+
+function startSync() {
+    window.addEventListener('storage', function(e) {
+        if (e.key === STORAGE_KEY) {
+            loadData();
+            showSyncStatus('🔄 Données synchronisées');
+        }
+    });
+    syncInterval = setInterval(() => loadData(), SYNC_INTERVAL);
+}
+
+function stopSync() {
+    if (syncInterval) {
+        clearInterval(syncInterval);
+        syncInterval = null;
+    }
+}
+
+// Mise à jour des affichages
+function updateAllDisplays() {
+    updateStudyNameDisplay();
+    updateLockStatus();
+    updateConfigDisplay();
+    updateHistoryTable();
+    updateStrateSelect();
+}
+
+function updateStudyNameDisplay() {
+    const displayElement = document.getElementById('studyNameText');
+    displayElement.textContent = studyConfig.studyName || 'Aucune étude configurée';
+}
+
+function updateLockStatus() {
+    const badge = document.getElementById('statusBadge');
+    const badgeContainer = document.getElementById('lockStatusBadge');
+    
+    if (studyConfig.strates.length > 0) {
+        badgeContainer.classList.remove('hidden');
+        if (studyConfig.isLocked) {
+            badge.className = 'status-badge status-locked';
+            badge.textContent = '🔒 Configuration verrouillée';
+        } else {
+            badge.className = 'status-badge status-unlocked';
+            badge.textContent = '🔓 Configuration ouverte';
+        }
+    } else {
+        badgeContainer.classList.add('hidden');
+    }
+}
+
+function updateConfigDisplay() {
+    const container = document.getElementById('currentGroups');
+    const display = document.getElementById('configDisplay');
+    
+    if (studyConfig.strates.length === 0) {
+        container.classList.add('hidden');
+        return;
+    }
+    
+    container.classList.remove('hidden');
+    
+    let html = '';
+    html += `<li><strong>Nom:</strong> ${studyConfig.studyName}</li>`;
+    html += `<li><strong>Mot de passe:</strong> ${studyConfig.userPassword ? '********' : 'Non configuré'}</li>`;
+    html += `<li><strong>Strates:</strong> ${studyConfig.strates.length}</li>`;
+    
+    if (studyConfig.strates.length > 0) {
+        html += `<li><strong>Détail par strate:</strong><ul style="margin-left: 20px;">`;
+        studyConfig.strates.forEach(strate => {
+            const groups = studyConfig.randomizationByStrate[strate] || [];
+            const counter = studyConfig.strateCounters[strate] || 0;
+            html += `<li><strong>${strate}:</strong> ${groups.length} groupes (${counter} randomisés)</li>`;
+        });
+        html += `</ul></li>`;
+    }
+    
+    let totalGroups = 0;
+    let totalRandomized = 0;
+    studyConfig.strates.forEach(strate => {
+        totalGroups += (studyConfig.randomizationByStrate[strate] || []).length;
+        totalRandomized += (studyConfig.strateCounters[strate] || 0);
+    });
+    
+    html += `<li><strong>Total groupes:</strong> ${totalGroups}</li>`;
+    html += `<li><strong>Total randomisés:</strong> ${totalRandomized}</li>`;
+    html += `<li><strong>Statut:</strong> ${studyConfig.isLocked ? '🔒 Verrouillé' : '🔓 Déverrouillé'}</li>`;
+    
+    display.innerHTML = html;
+    
+    if (isAdminLoggedIn) {
+        if (studyConfig.isLocked) {
+            document.getElementById('lockButton').classList.add('hidden');
+            document.getElementById('unlockButton').classList.remove('hidden');
+            document.getElementById('stratesList').disabled = true;
+            document.getElementById('studyName').disabled = true;
+        } else {
+            document.getElementById('lockButton').classList.remove('hidden');
+            document.getElementById('unlockButton').classList.add('hidden');
+            document.getElementById('lockWarning').classList.remove('hidden');
+            document.getElementById('stratesList').disabled = false;
+            document.getElementById('studyName').disabled = false;
+        }
+    }
+}
+function updateHistoryTable() {
+    const tbody = document.getElementById('historyTable');
+    
+    if (studyConfig.randomizationHistory.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; color: #999;">Aucune randomisation effectuée</td></tr>';
+        return;
+    }
+    
+    tbody.innerHTML = studyConfig.randomizationHistory.map(item => `
+        <tr>
+            <td>${item.patientNumber}</td>
+            <td><strong>${item.initials}</strong></td>
+            <td>${item.investigator}</td>
+            <td>${item.strate || 'N/A'}</td>
+            <td><strong>${item.group}</strong></td>
+            <td>${item.dateTime}</td>
+        </tr>
+    `).join('');
+}
+
+function updateStrateSelect() {
+    const select = document.getElementById('strateSelect');
+    const group = document.getElementById('strateGroup');
+    
+    if (studyConfig.strates.length === 0) {
+        group.classList.add('hidden');
+        return;
+    }
+    
+    group.classList.remove('hidden');
+    select.innerHTML = '<option value="">-- Sélectionnez une strate --</option>';
+    studyConfig.strates.forEach(strate => {
+        const option = document.createElement('option');
+        option.value = strate;
+        option.textContent = strate;
+        select.appendChild(option);
+    });
+}
+
+function createStratesConfig() {
+    const stratesText = document.getElementById('stratesList').value;
+    const strates = stratesText.split('\n').filter(s => s.trim() !== '');
+    
+    if (strates.length === 0) {
+        alert('❌ Veuillez entrer au moins une strate!');
+        return;
+    }
+    
+    if (studyConfig.isLocked) {
+        alert('⚠️ Configuration verrouillée. Déverrouillez-la pour modifier.');
+        return;
+    }
+    
+    const container = document.getElementById('stratesListsContainer');
+    container.innerHTML = '';
+    
+    strates.forEach((strate, index) => {
+        const strateDiv = document.createElement('div');
+        strateDiv.className = 'strate-config-box';
+        const existingList = studyConfig.randomizationByStrate[strate] || [];
+        const existingText = existingList.join('\n');
+        
+        strateDiv.innerHTML = `
+            <h4>🎲 ${strate}</h4>
+            <div class="input-group">
+                <label>Liste de randomisation (un groupe par ligne): *</label>
+                <textarea id="groupsList_${index}" placeholder="Exemple:&#10;Groupe A&#10;Groupe B&#10;Groupe A&#10;Groupe B" style="min-height: 150px;">${existingText}</textarea>
+                <small style="color: #666; display: block; margin-top: 5px;">
+                    Nombre de groupes : <span id="count_${index}">${existingList.length}</span>
+                </small>
+            </div>
+        `;
+        
+        container.appendChild(strateDiv);
+        
+        const textarea = document.getElementById(`groupsList_${index}`);
+        textarea.addEventListener('input', function() {
+            const groups = this.value.split('\n').filter(g => g.trim() !== '');
+            document.getElementById(`count_${index}`).textContent = groups.length;
+        });
+    });
+    
+    document.getElementById('stratesConfigSection').classList.remove('hidden');
+    alert(`✅ ${strates.length} strate(s) créée(s)!\n\nConfigurez maintenant la liste de randomisation pour chaque strate, puis cliquez sur "Sauvegarder la Configuration Complète".`);
+}
+
+function checkUserPassword() {
+    const password = document.getElementById('userPassword').value;
+    
+    if (!studyConfig.userPassword) {
+        alert('❌ ERREUR: Le système n\'est pas encore configuré.\nVeuillez contacter l\'administrateur.');
+        return;
+    }
+    
+    if (!studyConfig.isLocked) {
+        alert('⚠️ ATTENTION: La configuration n\'est pas encore verrouillée.\nVeuillez contacter l\'administrateur pour finaliser la configuration.');
+        return;
+    }
+    
+    if (password === studyConfig.userPassword) {
+        isUserLoggedIn = true;
+        document.getElementById('userLoginMode').classList.add('hidden');
+        document.getElementById('userMode').classList.remove('hidden');
+        document.getElementById('userPassword').value = '';
+        document.getElementById('randomizationDate').valueAsDate = new Date();
+        startSync();
+    } else {
+        alert('❌ Mot de passe incorrect!');
+        document.getElementById('userPassword').value = '';
+    }
+}
+
+function logoutUser() {
+    isUserLoggedIn = false;
+    document.getElementById('userMode').classList.add('hidden');
+    document.getElementById('userLoginMode').classList.remove('hidden');
+    document.getElementById('resultBox').classList.add('hidden');
+    document.getElementById('patientInitials').value = '';
+    document.getElementById('investigatorName').value = '';
+    document.getElementById('strateSelect').selectedIndex = 0;
+    stopSync();
+}
+
+function randomizePatient() {
+    if (!studyConfig.isLocked) {
+        alert('❌ ERREUR: La configuration doit être verrouillée avant de randomiser.\nContactez l\'administrateur.');
+        return;
+    }
+    
+    if (studyConfig.strates.length === 0) {
+        alert('❌ ERREUR: Aucune strate configurée.\nContactez l\'administrateur.');
+        return;
+    }
+    
+    const initials = document.getElementById('patientInitials').value.trim().toUpperCase();
+    const investigator = document.getElementById('investigatorName').value.trim();
+    const strate = document.getElementById('strateSelect').value;
+    const date = document.getElementById('randomizationDate').value;
+    
+    if (!initials) {
+        alert('⚠️ Veuillez entrer les initiales du patient!');
+        document.getElementById('patientInitials').focus();
+        return;
+    }
+    
+    if (!investigator) {
+        alert('⚠️ Veuillez entrer le nom de l\'investigateur!');
+        document.getElementById('investigatorName').focus();
+        return;
+    }
+    
+    if (!strate) {
+        alert('⚠️ Veuillez sélectionner une strate!');
+        document.getElementById('strateSelect').focus();
+        return;
+    }
+    
+    if (!date) {
+        alert('⚠️ Veuillez sélectionner une date!');
+        return;
+    }
+    
+    const strateList = studyConfig.randomizationByStrate[strate];
+    if (!strateList || strateList.length === 0) {
+        alert('❌ ERREUR: Aucune liste de randomisation pour cette strate.\nContactez l\'administrateur.');
+        return;
+    }
+    
+    const strateCounter = studyConfig.strateCounters[strate] || 0;
+    if (strateCounter >= strateList.length) {
+        alert(`⚠️ ATTENTION: Tous les groupes de la liste pour la strate "${strate}" ont été assignés!\n\nVous avez randomisé ${strateList.length} patients dans cette strate.\nContactez l\'administrateur pour continuer.`);
+        return;
+    }
+    
+    const group = strateList[strateCounter];
+    studyConfig.strateCounters[strate] = strateCounter + 1;
+    
+    const globalPatientNumber = studyConfig.randomizationHistory.length + 1;
+    const patientNumber = `Patient n°${globalPatientNumber}`;
+    const dateTime = new Date().toLocaleString('fr-FR');
+    
+    document.getElementById('patientId').textContent = patientNumber;
+    document.getElementById('resultInitials').textContent = initials;
+    document.getElementById('resultInvestigator').textContent = investigator;
+    document.getElementById('resultStrate').textContent = strate;
+    document.getElementById('groupAssigned').textContent = group;
+    document.getElementById('dateTime').textContent = dateTime;
+    document.getElementById('resultBox').classList.remove('hidden');
+    
+    studyConfig.randomizationHistory.unshift({
+        patientNumber,
+        initials,
+        investigator,
+        strate: strate,
+        group,
+        dateTime,
+        randomizationDate: date
+    });
+    
+    saveData();
+    
+    document.getElementById('patientInitials').value = '';
+    document.getElementById('investigatorName').value = '';
+    document.getElementById('strateSelect').selectedIndex = 0;
+    
+    document.getElementById('resultBox').scrollIntoView({ behavior: 'smooth' });
+}
+
+function exportCurrentToExcel() {
+    const lastResult = studyConfig.randomizationHistory[0];
+    if (!lastResult) return;
+    
+    let csv = 'Numéro Patient,Initiales,Investigateur,Strate,Groupe Assigné,Date Randomisation,Date et Heure\n';
+    csv += `${lastResult.patientNumber},${lastResult.initials},${lastResult.investigator},${lastResult.strate},${lastResult.group},${lastResult.randomizationDate},${lastResult.dateTime}\n`;
+    
+    downloadCSV(csv, `randomisation_${lastResult.patientNumber.replace(/\s/g, '_')}.csv`);
+}
+
+function exportAllToExcel() {
+    if (studyConfig.randomizationHistory.length === 0) {
+        alert('❌ Aucune donnée à exporter!');
+        return;
+    }
+    
+    let csv = 'Numéro Patient,Initiales,Investigateur,Strate,Groupe Assigné,Date Randomisation,Date et Heure\n';
+    
+    studyConfig.randomizationHistory.forEach(item => {
+        csv += `${item.patientNumber},${item.initials},${item.investigator},${item.strate},${item.group},${item.randomizationDate || ''},${item.dateTime}\n`;
+    });
+    
+    const filename = studyConfig.studyName 
+        ? `randomisation_${studyConfig.studyName.replace(/[^a-z0-9]/gi, '_')}_complet.csv` 
+        : `randomisation_complet_${new Date().getTime()}.csv`;
+    
+    downloadCSV(csv, filename);
+    
+    alert(`✅ Historique complet exporté!\n\n${studyConfig.randomizationHistory.length} randomisation(s) exportée(s).`);
+}
+
+function downloadCSV(csvContent, filename) {
+    const blob = new Blob(['\ufeff' + csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    
+    link.setAttribute('href', url);
+    link.setAttribute('download', filename);
+    link.style.visibility = 'hidden';
+    
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+}
+
+function showAdminLogin() {
+    document.getElementById('userLoginMode').classList.add('hidden');
+    document.getElementById('adminLogin').classList.remove('hidden');
+    document.getElementById('adminPassword').focus();
+}
+
+function backToUserLogin() {
+    document.getElementById('adminLogin').classList.add('hidden');
+    document.getElementById('userLoginMode').classList.remove('hidden');
+    document.getElementById('adminPassword').value = '';
+}
+
+function checkAdminPassword() {
+    const password = document.getElementById('adminPassword').value;
+    
+    if (password === ADMIN_PASSWORD) {
+        isAdminLoggedIn = true;
+        document.getElementById('adminLogin').classList.add('hidden');
+        document.getElementById('adminMode').classList.remove('hidden');
+        document.getElementById('adminPassword').value = '';
+        
+        if (studyConfig.studyName) {
+            document.getElementById('studyName').value = studyConfig.studyName;
+        }
+        if (studyConfig.userPassword) {
+            document.getElementById('userPasswordConfig').value = studyConfig.userPassword;
+        }
+        if (studyConfig.strates.length > 0) {
+            document.getElementById('stratesList').value = studyConfig.strates.join('\n');
+            createStratesConfig();
+        }
+        
+        updateAllDisplays();
+        startSync();
+    } else {
+        alert('❌ Mot de passe administrateur incorrect!');
+        document.getElementById('adminPassword').value = '';
+    }
+}
+
+function logoutAdmin() {
+    isAdminLoggedIn = false;
+    document.getElementById('adminMode').classList.add('hidden');
+    document.getElementById('userLoginMode').classList.remove('hidden');
+    stopSync();
+}
+
+function saveConfiguration() {
+    const name = document.getElementById('studyName').value.trim();
+    const userPwd = document.getElementById('userPasswordConfig').value.trim();
+    const stratesText = document.getElementById('stratesList').value;
+    
+    if (!name) {
+        alert('❌ Veuillez entrer un nom d\'étude!');
+        return;
+    }
+    
+    if (!userPwd) {
+        alert('❌ Veuillez définir un mot de passe utilisateur!');
+        return;
+    }
+    
+    const strates = stratesText.split('\n').filter(s => s.trim() !== '');
+    
+    if (strates.length === 0) {
+        alert('❌ Veuillez entrer au moins une strate!');
+        return;
+    }
+    
+    if (studyConfig.isLocked) {
+        alert('⚠️ La configuration est verrouillée. Seul le mot de passe utilisateur peut être modifié.\n\nPour modifier la liste de randomisation, déverrouillez d\'abord la configuration.');
+        studyConfig.userPassword = userPwd;
+        saveData();
+        updateAllDisplays();
+        alert('✅ Mot de passe utilisateur mis à jour!');
+        return;
+    }
+    
+    const randomizationByStrate = {};
+    const strateCounters = {};
+    let totalGroups = 0;
+    
+    for (let i = 0; i < strates.length; i++) {
+        const textarea = document.getElementById(`groupsList_${i}`);
+        if (!textarea) {
+            alert(`❌ Veuillez d'abord créer les strates en cliquant sur "Créer les strates"!`);
+            return;
+        }
+        
+        const groups = textarea.value.split('\n').filter(g => g.trim() !== '');
+        
+        if (groups.length === 0) {
+            alert(`❌ La strate "${strates[i]}" n'a pas de liste de randomisation!`);
+            return;
+        }
+        
+        randomizationByStrate[strates[i]] = groups;
+        strateCounters[strates[i]] = studyConfig.strateCounters[strates[i]] || 0;
+        totalGroups += groups.length;
+    }
+    
+    studyConfig.studyName = name;
+    studyConfig.userPassword = userPwd;
+    studyConfig.strates = strates;
+    studyConfig.randomizationByStrate = randomizationByStrate;
+    studyConfig.strateCounters = strateCounters;
+    
+    saveData();
+    updateAllDisplays();
+    
+    let summary = `✅ Configuration sauvegardée avec succès!\n\n`;
+    summary += `- Nom: ${name}\n`;
+    summary += `- Mot de passe utilisateur: défini\n`;
+    summary += `- Strates: ${strates.length}\n`;
+    summary += `- Total groupes: ${totalGroups}\n\n`;
+    summary += `Détail par strate:\n`;
+    strates.forEach(strate => {
+        summary += `  • ${strate}: ${randomizationByStrate[strate].length} groupes\n`;
+    });
+    summary += `\nN'oubliez pas de VERROUILLER la configuration avant de partager le fichier!`;
+    
+    alert(summary);
+}
+
+function lockConfiguration() {
+    if (!studyConfig.studyName || !studyConfig.userPassword || studyConfig.strates.length === 0) {
+        alert('❌ Veuillez d\'abord sauvegarder une configuration complète!');
+        return;
+    }
+    
+    for (let strate of studyConfig.strates) {
+        if (!studyConfig.randomizationByStrate[strate] || studyConfig.randomizationByStrate[strate].length === 0) {
+            alert(`❌ La strate "${strate}" n'a pas de liste de randomisation!`);
+            return;
+        }
+    }
+    
+    if (!confirm('🔒 VERROUILLAGE DE LA CONFIGURATION\n\nUne fois verrouillée:\n- Les listes de randomisation ne pourront plus être modifiées\n- Les strates ne pourront plus être modifiées\n- Seul l\'historique pourra être effacé\n\nÊtes-vous sûr de vouloir verrouiller?')) {
+        return;
+    }
+    
+    studyConfig.isLocked = true;
+    saveData();
+    updateAllDisplays();
+    
+    alert('✅ Configuration verrouillée avec succès!\n\nLe fichier peut maintenant être partagé avec les autres utilisateurs.\nIls pourront randomiser des patients en utilisant le mot de passe utilisateur.');
+}
+
+function unlockConfiguration() {
+    if (!confirm('🔓 DÉVERROUILLAGE DE LA CONFIGURATION\n\nCette action permettra de modifier à nouveau:\n- Les listes de randomisation\n- Les strates\n- Le nom de l\'étude\n\nÊtes-vous sûr?')) {
+        return;
+    }
+    
+    studyConfig.isLocked = false;
+    saveData();
+    updateAllDisplays();
+    
+    alert('✅ Configuration déverrouillée!\n\nVous pouvez maintenant modifier les listes de randomisation.');
+}
+
+function refreshHistory() {
+    loadData();
+    showSyncStatus('🔄 Historique actualisé');
+}
+
+function clearHistory() {
+    if (!confirm('⚠️ ATTENTION: Cette action effacera uniquement l\'historique des randomisations.\n\nLa configuration (nom, groupes, strates) sera conservée.\nLes compteurs de chaque strate seront remis à zéro.\n\nÊtes-vous sûr?')) {
+        return;
+    }
+    
+    studyConfig.randomizationHistory = [];
+    
+    studyConfig.strates.forEach(strate => {
+        studyConfig.strateCounters[strate] = 0;
+    });
+    
+    saveData();
+    updateAllDisplays();
+    
+    alert('✅ Historique effacé avec succès!\n\nLa configuration est conservée et les compteurs sont remis à zéro.');
+}
+
+function clearAll() {
+    if (!confirm('🚨 ATTENTION CRITIQUE: Cette action effacera TOUTES les données:\n\n- Le nom de l\'étude\n- Les listes de randomisation de toutes les strates\n- Les strates\n- Tout l\'historique des randomisations\n\nCette action est IRRÉVERSIBLE!\n\nÊtes-vous absolument sûr?')) {
+        return;
+    }
+    
+    if (!confirm('⚠️ DERNIÈRE CONFIRMATION:\n\nVous allez perdre toutes les données.\nTapez OK pour confirmer définitivement.')) {
+        return;
+    }
+    
+    studyConfig = {
+        studyName: '',
+        userPassword: '',
+        strates: [],
+        randomizationByStrate: {},
+        strateCounters: {},
+        isLocked: false,
+        randomizationHistory: []
+    };
+    
+    localStorage.removeItem(STORAGE_KEY);
+    
+    document.getElementById('stratesList').value = '';
+    document.getElementById('studyName').value = '';
+    document.getElementById('userPasswordConfig').value = '';
+    document.getElementById('stratesConfigSection').classList.add('hidden');
+    document.getElementById('stratesListsContainer').innerHTML = '';
+    
+    updateAllDisplays();
+    
+    alert('✅ Toutes les données ont été effacées!\n\nVous pouvez maintenant configurer une nouvelle étude.');
+}
+
+window.addEventListener('DOMContentLoaded', function() {
+    loadData();
+    
+    document.getElementById('userPassword').addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+            checkUserPassword();
+        }
+    });
+    
+    document.getElementById('adminPassword').addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+            checkAdminPassword();
+        }
+    });
+});
+</script>
+</body>
+</html>
